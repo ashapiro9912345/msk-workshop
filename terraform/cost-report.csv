@@ -1,0 +1,7 @@
+resource,count,unit,unit_price_usd,hours_per_month,storage_gb_per_unit,storage_price_per_gb_usd,monthly_cost_usd,notes
+MSK broker (kafka.m5.large),2,hour,0.096,730,1000,0.08,300.16,"Compute + 1000GB storage per broker (2 brokers total)"
+Aurora writer (db.r5.large),1,hour,0.126,730,100,0.10,101.98,"Compute + 100GB storage"
+Redshift (ra3.xlplus),1,hour,1.10,730,0,0,803.00,"Redshift node on-demand estimate (node cost only)"
+S3 (storage, minimal),1,month,1,0,0,0,1.00,"Small S3 storage estimate"
+CloudWatch & misc,1,month,10,0,0,0,10.00,"Monitoring, logs, small services estimate"
+Total,,,,,,,1216.14,"Approximate total monthly cost (USD)"
