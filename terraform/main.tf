@@ -98,7 +98,7 @@ resource "aws_security_group" "redshift_sg" {
 
 resource "aws_msk_cluster" "this" {
   cluster_name           = var.msk_cluster_name
-  kafka_version          = "3.2.0"
+  kafka_version          = var.kafka_version
   number_of_broker_nodes = local.az_count
 
   broker_node_group_info {

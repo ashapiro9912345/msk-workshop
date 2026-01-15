@@ -32,6 +32,12 @@ variable "msk_instance_type" {
   default = "kafka.m5.large"
 }
 
+variable "kafka_version" {
+  description = "Kafka version for MSK (choose a supported value in your region)"
+  type        = string
+  default     = "3.9.x"
+}
+
 variable "aurora_cluster_identifier" {
   type    = string
   default = "aurora-cdc-cluster"
@@ -54,7 +60,8 @@ variable "redshift_cluster_identifier" {
 
 variable "redshift_node_type" {
   type    = string
-  default = "dc2.large"
+  # Use a supported modern node type (e.g. ra3.xlplus). Update as needed for your account/region.
+  default = "ra3.xlplus"
 }
 
 variable "redshift_number_of_nodes" {
