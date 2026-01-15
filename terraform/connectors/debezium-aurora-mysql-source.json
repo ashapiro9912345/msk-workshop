@@ -2,15 +2,16 @@
   "name": "debezium-aurora-mysql-source",
   "config": {
     "connector.class": "io.debezium.connector.mysql.MySqlConnector",
-    "database.hostname": "<AURORA_WRITER_ENDPOINT>",
+    "database.hostname": "aurora-cdc-cluster.cluster-ck5mmcwy82r9.us-east-1.rds.amazonaws.com",
     "database.port": "3306",
-    "database.user": "<replication_user>",
-    "database.password": "<replication_password>",
+    "database.user": "admin",
+    "database.password": "REPLACE_WITH_DB_MASTER_OR_REPL_PASSWORD",
     "database.server.id": "184054",
     "database.server.name": "aurora_mysql",
     "database.include.list": "<your_db>",
     "include.schema.changes": "false",
-    "database.history.kafka.bootstrap.servers": "<MSK_BOOTSTRAP_BROKERS>",
+    "database.history.kafka.bootstrap.servers": "b-1.mskcdccluster.23h9u7.c3.kafka.us-east-1.amazonaws.com:9094,b-2.mskcdccluster.23h9u7.c3.kafka.us-east-1.amazonaws.com:9094",
     "database.history.kafka.topic": "schema-changes.aurora"
   }
 }
+

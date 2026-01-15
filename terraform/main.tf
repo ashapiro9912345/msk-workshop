@@ -148,6 +148,8 @@ resource "aws_redshift_cluster" "redshift" {
   cluster_subnet_group_name = aws_redshift_subnet_group.redshift_subnet_group.name
   vpc_security_group_ids     = [aws_security_group.redshift_sg.id]
   skip_final_snapshot = true
+  encrypted = true
+  availability_zone_relocation_enabled = true
   publicly_accessible = false
   tags = { Name = var.redshift_cluster_identifier }
 }

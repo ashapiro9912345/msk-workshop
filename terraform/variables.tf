@@ -78,3 +78,64 @@ variable "redshift_master_password" {
   type      = string
   sensitive = true
 }
+
+variable "plugin_bucket_name" {
+  description = "S3 bucket name to store connector plugin zips (leave empty to let Terraform generate one)"
+  type        = string
+  default     = ""
+}
+
+variable "debezium_plugin_key" {
+  type    = string
+  default = "debezium-connector.zip"
+}
+
+variable "jdbc_plugin_key" {
+  type    = string
+  default = "jdbc-sink-connector.zip"
+}
+
+variable "debezium_plugin_local_path" {
+  description = "Local path to Debezium plugin zip. If empty, Terraform will not try to upload it."
+  type        = string
+  default     = ""
+}
+
+variable "jdbc_plugin_local_path" {
+  description = "Local path to JDBC sink plugin zip. If empty, Terraform will not try to upload it."
+  type        = string
+  default     = ""
+}
+
+variable "create_connectors" {
+  description = "Whether to create MSK Connect custom plugins and connectors via Terraform"
+  type        = bool
+  default     = false
+}
+
+variable "debezium_plugin_name" {
+  type    = string
+  default = "debezium-plugin"
+}
+
+variable "jdbc_plugin_name" {
+  type    = string
+  default = "jdbc-sink-plugin"
+}
+
+variable "connector_mcu_count" {
+  type    = number
+  default = 1
+}
+
+variable "kafkaconnect_version" {
+  description = "MSK Connect version to use for connectors"
+  type        = string
+  default     = "2.9.0"
+}
+
+variable "msk_bootstrap_brokers" {
+  description = "Comma-separated MSK bootstrap brokers (injected from terraform output or provided manually)"
+  type        = string
+  default     = ""
+}
