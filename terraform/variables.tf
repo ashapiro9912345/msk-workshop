@@ -128,6 +128,18 @@ variable "connector_mcu_count" {
   default = 1
 }
 
+variable "aurora_instance_class" {
+  description = "Instance class for Aurora cluster instances (use small type for dev)"
+  type        = string
+  default     = "db.t3.medium"
+}
+
+variable "create_redshift" {
+  description = "Whether to create the Redshift cluster (set false for low-cost dev)"
+  type        = bool
+  default     = false
+}
+
 variable "kafkaconnect_version" {
   description = "MSK Connect version to use for connectors"
   type        = string

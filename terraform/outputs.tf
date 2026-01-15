@@ -11,5 +11,5 @@ output "aurora_endpoint" {
 }
 
 output "redshift_endpoint" {
-  value = aws_redshift_cluster.redshift.endpoint
+  value = var.create_redshift ? aws_redshift_cluster.redshift[0].endpoint : ""
 }

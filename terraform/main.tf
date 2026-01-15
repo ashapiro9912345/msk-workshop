@@ -80,6 +80,7 @@ resource "aws_security_group" "rds_sg" {
 }
 
 resource "aws_security_group" "redshift_sg" {
+  count  = var.create_redshift ? 1 : 0
   name   = "redshift-sg"
   vpc_id = aws_vpc.this.id
   ingress {
@@ -130,23 +131,25 @@ resource "aws_rds_cluster_instance" "aurora_instances" {
   count              = 1
   identifier         = "${var.aurora_cluster_identifier}-instance-${count.index + 1}"
   cluster_identifier = aws_rds_cluster.aurora.id
-  instance_class     = "db.r5.large"
+  instance_class     = var.aurora_instance_class
   engine             = aws_rds_cluster.aurora.engine
 }
 
 resource "aws_redshift_subnet_group" "redshift_subnet_group" {
+  count      = var.create_redshift ? 1 : 0
   name       = "redshift-subnet-group"
   subnet_ids = aws_subnet.private[*].id
 }
 
 resource "aws_redshift_cluster" "redshift" {
+  count = var.create_redshift ? 1 : 0
   cluster_identifier = var.redshift_cluster_identifier
   node_type          = var.redshift_node_type
   number_of_nodes    = var.redshift_number_of_nodes
   master_username    = var.redshift_master_username
   master_password    = var.redshift_master_password
-  cluster_subnet_group_name = aws_redshift_subnet_group.redshift_subnet_group.name
-  vpc_security_group_ids     = [aws_security_group.redshift_sg.id]
+  cluster_subnet_group_name = aws_redshift_subnet_group.redshift_subnet_group[0].name
+  vpc_security_group_ids     = var.create_redshift ? [aws_security_group.redshift_sg[0].id] : []
   skip_final_snapshot = true
   encrypted = true
   availability_zone_relocation_enabled = true
