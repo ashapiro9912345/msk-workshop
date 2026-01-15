@@ -1,0 +1,16 @@
+{
+  "name": "debezium-aurora-mysql-source",
+  "config": {
+    "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+    "database.hostname": "<AURORA_WRITER_ENDPOINT>",
+    "database.port": "3306",
+    "database.user": "<replication_user>",
+    "database.password": "<replication_password>",
+    "database.server.id": "184054",
+    "database.server.name": "aurora_mysql",
+    "database.include.list": "<your_db>",
+    "include.schema.changes": "false",
+    "database.history.kafka.bootstrap.servers": "<MSK_BOOTSTRAP_BROKERS>",
+    "database.history.kafka.topic": "schema-changes.aurora"
+  }
+}
