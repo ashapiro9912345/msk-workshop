@@ -4,3 +4,5 @@ secrets*.tfvars
 *.tfstate.*
 .terraform/
 terraform/connectors/generated/
+debezium-connectorl.zip
+jdbc-sink-connector.zip

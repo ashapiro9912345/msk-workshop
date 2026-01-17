@@ -3,7 +3,7 @@ output "vpc_id" {
 }
 
 output "msk_bootstrap_brokers" {
-  value = aws_msk_cluster.this.bootstrap_brokers
+  value = aws_msk_cluster.this.bootstrap_brokers_tls
 }
 
 output "aurora_endpoint" {
