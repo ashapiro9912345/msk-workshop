@@ -3,3 +3,4 @@ secrets*.tfvars
 *.tfstate
 *.tfstate.*
 .terraform/
+terraform/connectors/generated/
