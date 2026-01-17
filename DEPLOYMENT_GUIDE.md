@@ -48,15 +48,17 @@ cat terraform/terraform.tfvars
 
 Key settings:
 - `create_redshift = false` - Set to `true` if you need Redshift (adds ~$800/month)
+- `create_bastion = true` - Bastion host for Aurora/MSK access (adds ~$7/month)
 - `aurora_instance_class = "db.r5.large"` - Adjust for cost vs performance
 
 ### Step 2: Review Costs
 
 Before deployment, understand the costs:
-- **With Redshift disabled** (current setting): ~$400/month
+- **With Redshift disabled, bastion enabled** (current setting): ~$407/month
   - MSK: $300/month (2 brokers)
   - Aurora: $100/month
-- **With Redshift enabled**: ~$1,216/month (adds $800 for Redshift)
+  - Bastion: $7/month (t3.micro)
+- **With Redshift enabled**: ~$1,207/month (adds $800 for Redshift)
 
 See [terraform/cost-report.md](terraform/cost-report.md) for details.
 
@@ -79,6 +81,7 @@ This shows what will be created:
 - 1 VPC with 2 public and 2 private subnets
 - 1 MSK cluster (2 brokers)
 - 1 Aurora MySQL cluster (1 instance)
+- 1 Bastion host (t3.micro) for secure access
 - Security groups and networking
 - IAM roles for MSK Connect
 - 0 or 1 Redshift cluster (based on `create_redshift` variable)
@@ -110,8 +113,32 @@ You should see:
 - `msk_bootstrap_brokers` - Kafka broker endpoints (CRITICAL for connectors)
 - `aurora_endpoint` - Aurora cluster endpoint
 - `redshift_endpoint` - Redshift endpoint (if enabled)
+- `bastion_instance_id` - Bastion host ID for Systems Manager access
+- `bastion_public_ip` - Bastion public IP (if SSH key configured)
 
 **Save these outputs!** You'll need them for connector configuration.
+
+### Step 6a: Connect to Aurora via Bastion
+
+The infrastructure includes a bastion host for secure access to Aurora MySQL.
+
+**Option 1: Use the helper script (Easiest)**
+```powershell
+cd terraform/scripts
+.\connect-to-aurora.ps1
+```
+
+**Option 2: Manual SSM Session**
+```powershell
+# Get bastion instance ID
+cd terraform
+$BASTION_ID = terraform output -raw bastion_instance_id
+
+# Start SSM session
+aws ssm start-session --target $BASTION_ID --region us-east-1
+```
+
+Once connected to the bastion, you can access Aurora MySQL from inside the VPC.
 
 ### Step 7: Enable Aurora Binary Logging
 
@@ -134,11 +161,11 @@ aws rds create-db-cluster-parameter-group `
   --db-parameter-group-family aurora-mysql8.0 `
   --description "Aurora MySQL with binary logging enabled"
 
-# Modify parameters
+# Modify parameters (use pending-reboot for static parameters)
 aws rds modify-db-cluster-parameter-group `
   --db-cluster-parameter-group-name aurora-mysql-binlog `
-  --parameters "ParameterName=binlog_format,ParameterValue=ROW,ApplyMethod=immediate" `
-               "ParameterName=binlog_row_image,ParameterValue=FULL,ApplyMethod=immediate"
+  --parameters "ParameterName=binlog_format,ParameterValue=ROW,ApplyMethod=pending-reboot" `
+               "ParameterName=binlog_row_image,ParameterValue=FULL,ApplyMethod=pending-reboot"
 
 # Apply to cluster
 aws rds modify-db-cluster `
@@ -146,8 +173,13 @@ aws rds modify-db-cluster `
   --db-cluster-parameter-group-name aurora-mysql-binlog `
   --apply-immediately
 
-# Reboot
-aws rds failover-db-cluster --db-cluster-identifier aurora-cdc-cluster
+# Reboot (single instance cluster - reboot the instance)
+$INSTANCE_ID = aws rds describe-db-clusters `
+  --db-cluster-identifier aurora-cdc-cluster `
+  --query "DBClusters[0].DBClusterMembers[0].DBInstanceIdentifier" `
+  --output text
+
+aws rds reboot-db-instance --db-instance-identifier $INSTANCE_ID
 ```
 
 Wait ~5 minutes for the reboot to complete.

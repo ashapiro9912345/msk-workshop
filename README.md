@@ -25,8 +25,9 @@ Complete infrastructure-as-code solution for deploying a Change Data Capture (CD
 
 ## Features
 
-- **Complete Infrastructure**: VPC, MSK cluster, Aurora MySQL, optional Redshift
+- **Complete Infrastructure**: VPC, MSK cluster, Aurora MySQL, optional Redshift, bastion host
 - **Automated Deployment**: Scripts for infrastructure and connector deployment
+- **Secure Access**: Bastion host with AWS Systems Manager for Aurora/MSK access
 - **Cost Optimization**: Toggle features on/off, use smaller instances for dev/test
 - **Production Ready**: IAM roles, CloudWatch logging, security groups
 - **Easy Configuration**: Template-based connector configs with secret injection
@@ -62,8 +63,11 @@ Download these connectors and place in `terraform/` directory:
 Edit `terraform/terraform.tfvars`:
 
 ```hcl
-# Set to false to reduce costs (~$400/mo vs ~$1200/mo)
+# Set to false to reduce costs (~$407/mo vs ~$1207/mo)
 create_redshift = false
+
+# Bastion host for secure Aurora/MSK access
+create_bastion = true
 
 # Enable connector plugin upload
 create_connectors = true
@@ -168,18 +172,20 @@ cd terraform/scripts
 
 ## Cost Estimates
 
-### Development Configuration (Redshift disabled)
+### Development Configuration (Redshift disabled, bastion enabled)
 - **MSK**: ~$300/month (2 x kafka.m5.large brokers)
 - **Aurora**: ~$100/month (1 x db.r5.large)
+- **Bastion**: ~$7/month (1 x t3.micro)
 - **Other**: ~$10/month (CloudWatch, S3)
-- **Total**: ~$410/month
+- **Total**: ~$417/month
 
-### Production Configuration (Redshift enabled)
+### Production Configuration (Redshift enabled, bastion enabled)
 - **MSK**: ~$300/month
 - **Aurora**: ~$100/month
+- **Bastion**: ~$7/month
 - **Redshift**: ~$800/month (1 x ra3.xlplus)
 - **Other**: ~$15/month
-- **Total**: ~$1,215/month
+- **Total**: ~$1,222/month
 
 See [terraform/cost-report.md](terraform/cost-report.md) for detailed breakdown.
 
@@ -191,6 +197,8 @@ Key variables in `terraform/terraform.tfvars`:
 |----------|---------|-------------|
 | `aws_region` | `us-east-1` | AWS region for deployment |
 | `create_redshift` | `false` | Enable/disable Redshift cluster |
+| `create_bastion` | `false` | Enable/disable bastion host for Aurora/MSK access |
+| `bastion_instance_type` | `t3.micro` | Bastion host instance type |
 | `msk_instance_type` | `kafka.m5.large` | MSK broker instance type |
 | `aurora_instance_class` | `db.r5.large` | Aurora instance size |
 | `create_connectors` | `false` | Enable plugin upload and creation |

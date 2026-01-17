@@ -151,3 +151,15 @@ variable "msk_bootstrap_brokers" {
   type        = string
   default     = ""
 }
+
+variable "create_bastion" {
+  description = "Whether to create a bastion host for accessing Aurora/MSK"
+  type        = bool
+  default     = false
+}
+
+variable "bastion_instance_type" {
+  description = "Instance type for bastion host"
+  type        = string
+  default     = "t3.micro"
+}
