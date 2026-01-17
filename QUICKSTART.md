@@ -51,9 +51,37 @@ terraform plan
 terraform apply
 ```
 
+This will create:
+- VPC, subnets, and networking
+- MSK cluster (2 brokers)
+- Aurora MySQL cluster
+- Bastion host (t3.micro) for accessing Aurora
+- IAM roles and security groups
+
 ### Step 2: Configure Aurora for CDC
 
-Enable binary logging:
+**Connect to Aurora via Bastion Host:**
+
+The infrastructure includes a bastion host (EC2 instance) in the public subnet for secure access to Aurora.
+
+```powershell
+# Use the helper script (easiest method)
+cd scripts
+.\connect-to-aurora.ps1
+```
+
+Or manually connect using AWS Systems Manager:
+
+```powershell
+# Get bastion instance ID
+cd terraform
+$BASTION_ID = terraform output -raw bastion_instance_id
+
+# Start SSM session
+aws ssm start-session --target $BASTION_ID --region us-east-1
+```
+
+**Enable binary logging:**
 
 ```powershell
 # Create parameter group
@@ -62,11 +90,11 @@ aws rds create-db-cluster-parameter-group \
   --db-parameter-group-family aurora-mysql8.0 \
   --description "Aurora MySQL with binary logging"
 
-# Set parameters
+# Set parameters (use pending-reboot for static parameters)
 aws rds modify-db-cluster-parameter-group \
   --db-cluster-parameter-group-name aurora-mysql-binlog \
-  --parameters "ParameterName=binlog_format,ParameterValue=ROW,ApplyMethod=immediate" \
-               "ParameterName=binlog_row_image,ParameterValue=FULL,ApplyMethod=immediate"
+  --parameters "ParameterName=binlog_format,ParameterValue=ROW,ApplyMethod=pending-reboot" \
+               "ParameterName=binlog_row_image,ParameterValue=FULL,ApplyMethod=pending-reboot"
 
 # Apply to cluster
 aws rds modify-db-cluster \
@@ -74,17 +102,31 @@ aws rds modify-db-cluster \
   --db-cluster-parameter-group-name aurora-mysql-binlog \
   --apply-immediately
 
-# Reboot
-aws rds failover-db-cluster --db-cluster-identifier aurora-cdc-cluster
+# Reboot the instance (not failover, since there's only one instance)
+# Get instance ID first
+$INSTANCE_ID=$(aws rds describe-db-clusters \
+  --db-cluster-identifier aurora-cdc-cluster \
+  --query "DBClusters[0].DBClusterMembers[0].DBInstanceIdentifier" \
+  --output text)
+
+aws rds reboot-db-instance --db-instance-identifier $INSTANCE_ID
 ```
 
-Create database and user:
+**Create database and user:**
 
-```powershell
-# Get Aurora endpoint
-$AURORA_ENDPOINT = terraform output -raw aurora_endpoint
+Once connected to the bastion (via `connect-to-aurora.ps1` script or SSM session), run MySQL commands:
 
-# Connect
+```bash
+# Inside bastion host - get Aurora endpoint
+AURORA_ENDPOINT=$(aws rds describe-db-clusters \
+  --db-cluster-identifier aurora-cdc-cluster \
+  --query "DBClusters[0].Endpoint" \
+  --output text)
+
+# Get password from parameter store or use the one from terraform.tfvars
+# Password: 1zK_F?K+bQC1Rwn_bcXt (from your terraform.tfvars)
+
+# Connect to MySQL
 mysql -h $AURORA_ENDPOINT -u admin -p
 ```
 
@@ -164,12 +206,15 @@ SELECT * FROM users;
 
 ## Cost Estimate
 
-- **Without Redshift** (default): ~$400/month
+- **Without Redshift** (default): ~$407/month
   - MSK (2 brokers): $300/month
   - Aurora: $100/month
+  - Bastion (t3.micro): $7/month
 
-- **With Redshift**: ~$1,200/month
+- **With Redshift**: ~$1,207/month
   - Additional $800/month for Redshift
+
+**Note:** To disable bastion host and save $7/month, set `create_bastion = false` in terraform.tfvars
 
 To enable Redshift, set in `terraform.tfvars`:
 ```hcl

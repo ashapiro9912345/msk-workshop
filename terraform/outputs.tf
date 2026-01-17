@@ -28,3 +28,13 @@ output "msk_connect_role_arn" {
   description = "IAM role ARN for MSK Connect"
   value       = aws_iam_role.msk_connect_role.arn
 }
+
+output "bastion_instance_id" {
+  description = "Bastion host instance ID for Systems Manager access"
+  value       = var.create_bastion ? aws_instance.bastion[0].id : ""
+}
+
+output "bastion_public_ip" {
+  description = "Bastion host public IP for SSH access"
+  value       = var.create_bastion ? aws_instance.bastion[0].public_ip : ""
+}
