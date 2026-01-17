@@ -70,7 +70,7 @@ if (-not $dbPassword) {
     exit 1
 }
 
-Write-Host "✓ Loaded secrets" -ForegroundColor Green
+Write-Host "+ Loaded secrets" -ForegroundColor Green
 Write-Host ""
 
 # Get Terraform outputs
@@ -100,10 +100,10 @@ if (-not $auroraEndpoint) {
     exit 1
 }
 
-Write-Host "✓ MSK Bootstrap: $mskBootstrap" -ForegroundColor Green
-Write-Host "✓ Aurora Endpoint: $auroraEndpoint" -ForegroundColor Green
+Write-Host "+ MSK Bootstrap: $mskBootstrap" -ForegroundColor Green
+Write-Host "+ Aurora Endpoint: $auroraEndpoint" -ForegroundColor Green
 if ($redshiftEndpoint) {
-    Write-Host "✓ Redshift Endpoint: $redshiftEndpoint" -ForegroundColor Green
+    Write-Host "+ Redshift Endpoint: $redshiftEndpoint" -ForegroundColor Green
 } else {
     Write-Host "! Redshift not deployed (create_redshift=false)" -ForegroundColor Yellow
 }
@@ -141,7 +141,7 @@ $debeziumConfig = @{
 $debeziumJson = $debeziumConfig | ConvertTo-Json -Depth 10
 $debeziumPath = Join-Path $OutputDir "debezium-aurora-mysql-source.json"
 Set-Content -Path $debeziumPath -Value $debeziumJson -Encoding UTF8
-Write-Host "✓ Created: $debeziumPath" -ForegroundColor Green
+Write-Host "+ Created: $debeziumPath" -ForegroundColor Green
 
 # Generate JDBC sink connector config (if Redshift exists)
 if ($redshiftEndpoint) {
@@ -149,7 +149,7 @@ if ($redshiftEndpoint) {
 
     # Extract hostname from endpoint (remove port if present)
     $redshiftHost = $redshiftEndpoint -replace ':\d+$', ''
-    $connectionUrl = "jdbc:redshift://${redshiftEndpoint}/dev?user=rsadmin&password=${redshiftPassword}"
+    $connectionUrl = "jdbc:redshift://${redshiftEndpoint}/dev?user=rsadmin`&password=${redshiftPassword}"
 
     $jdbcConfig = @{
         name = "redshift-jdbc-sink"
@@ -171,9 +171,9 @@ if ($redshiftEndpoint) {
     $jdbcJson = $jdbcConfig | ConvertTo-Json -Depth 10
     $jdbcPath = Join-Path $OutputDir "redshift-jdbc-sink.json"
     Set-Content -Path $jdbcPath -Value $jdbcJson -Encoding UTF8
-    Write-Host "✓ Created: $jdbcPath" -ForegroundColor Green
+    Write-Host "+ Created: $jdbcPath" -ForegroundColor Green
 } else {
-    Write-Host "⊗ Skipping Redshift connector (Redshift not deployed)" -ForegroundColor Yellow
+    Write-Host "- Skipping Redshift connector (Redshift not deployed)" -ForegroundColor Yellow
 }
 
 # Generate connector deployment manifest
@@ -213,7 +213,7 @@ if ($redshiftEndpoint) {
 $manifestJson = $manifest | ConvertTo-Json -Depth 10
 $manifestPath = Join-Path $OutputDir "deployment-manifest.json"
 Set-Content -Path $manifestPath -Value $manifestJson -Encoding UTF8
-Write-Host "✓ Created: $manifestPath" -ForegroundColor Green
+Write-Host "+ Created: $manifestPath" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "=== Configuration Generation Complete ===" -ForegroundColor Green
@@ -232,3 +232,4 @@ Write-Host "  3. Create 'debezium' user in Aurora with replication privileges"
 Write-Host "  4. Run: .\deploy-connectors.ps1 to deploy connectors"
 Write-Host ""
 Write-Host "WARNING: Generated files contain passwords. DO NOT commit to git!" -ForegroundColor Red
+
