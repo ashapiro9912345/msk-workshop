@@ -123,8 +123,8 @@ AURORA_ENDPOINT=$(aws rds describe-db-clusters \
   --query "DBClusters[0].Endpoint" \
   --output text)
 
-# Get password from parameter store or use the one from terraform.tfvars
-# Password: 1zK_F?K+bQC1Rwn_bcXt (from your terraform.tfvars)
+# Get password from terraform.tfvars
+# Use the db_master_password value you set in terraform.tfvars
 
 # Connect to MySQL
 mysql -h $AURORA_ENDPOINT -u admin -p
