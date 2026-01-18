@@ -75,6 +75,27 @@ resource "aws_iam_role_policy_attachment" "bastion_ssm_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
+# Allow bastion to describe RDS resources for getting endpoints
+resource "aws_iam_role_policy" "bastion_rds_read" {
+  count = var.create_bastion ? 1 : 0
+  name  = "bastion-rds-read-policy"
+  role  = aws_iam_role.bastion_role[0].id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "rds:DescribeDBClusters",
+          "rds:DescribeDBInstances"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 # Instance profile
 resource "aws_iam_instance_profile" "bastion_profile" {
   count = var.create_bastion ? 1 : 0

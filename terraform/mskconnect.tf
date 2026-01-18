@@ -37,6 +37,8 @@ resource "aws_mskconnect_custom_plugin" "debezium" {
     }
   }
   content_type = "ZIP"
+
+  depends_on = [aws_s3_object.debezium_plugin]
 }
 
 resource "aws_mskconnect_custom_plugin" "jdbc" {

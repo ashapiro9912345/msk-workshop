@@ -6,3 +6,12 @@ secrets*.tfvars
 terraform/connectors/generated/
 debezium-connectorl.zip
 jdbc-sink-connector.zip
+
+# Temporary connector deployment files
+terraform/*.json
+terraform/plan.tfplan
+terraform/*.log
+terraform/*connector*.zip
+
+# Claude IDE
+.claude/
