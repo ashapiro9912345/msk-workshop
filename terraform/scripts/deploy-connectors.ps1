@@ -215,10 +215,10 @@ function Deploy-Connector {
         if (-not $mskSgId) {
             # Fallback: query AWS for the security group
             $sgParams = @{
-                'region' = $Region
+                'region'  = $Region
                 'filters' = 'Name=group-name,Values=msk-sg'
-                'query' = 'SecurityGroups[0].GroupId'
-                'output' = 'text'
+                'query'   = 'SecurityGroups[0].GroupId'
+                'output'  = 'text'
             }
             $mskSgId = aws ec2 describe-security-groups @sgParams 2>&1
         }
@@ -226,10 +226,10 @@ function Deploy-Connector {
         # Get private subnet IDs
         $vpcId = terraform output -raw vpc_id 2>$null
         $subnetsParams = @{
-            'region' = $Region
+            'region'  = $Region
             'filters' = "Name=vpc-id,Values=$vpcId Name=tag:Name,Values=private-*"
-            'query' = 'Subnets[*].SubnetId'
-            'output' = 'json'
+            'query'   = 'Subnets[*].SubnetId'
+            'output'  = 'json'
         }
         $subnetIds = aws ec2 describe-subnets @subnetsParams 2>&1 | ConvertFrom-Json
 
@@ -298,25 +298,24 @@ function Deploy-Connector {
     Write-Host "  Plugins: $($pluginsArray.Count)" -ForegroundColor Gray
     Write-Host ""
 
-    $command = @(
-        'aws', 'kafkaconnect', 'create-connector',
-        '--connector-name', $connectorName,
-        '--kafka-cluster', $kafkaClusterJson,
-        '--capacity', $capacityJson,
-        '--connector-configuration', $configJson,
-        '--plugins', $pluginsJson,
-        '--service-execution-role-arn', $roleArn,
-        '--log-delivery', $logDeliveryJson,
-        '--region', $Region
-    )
-
-    if ($WorkerConfigArn) {
-        $command += @('--worker-configuration', "arn=$WorkerConfigArn")
-    }
-
-    # Execute command
+    # Execute command with hashtable splatting
     try {
-        $result = & $command[0] $command[1..($command.Length-1)] 2>&1
+        $createConnectorParams = @{
+            'connector-name'           = $connectorName
+            'kafka-cluster'            = $kafkaClusterJson
+            'capacity'                 = $capacityJson
+            'connector-configuration'  = $configJson
+            'plugins'                  = $pluginsJson
+            'service-execution-role-arn' = $roleArn
+            'log-delivery'             = $logDeliveryJson
+            'region'                   = $Region
+        }
+
+        if ($WorkerConfigArn) {
+            $createConnectorParams['worker-configuration'] = "arn=$WorkerConfigArn"
+        }
+
+        $result = aws kafkaconnect create-connector @createConnectorParams 2>&1
         if ($LASTEXITCODE -ne 0) {
             Write-Error "Failed to create connector: $result"
             return $false
@@ -328,7 +327,11 @@ function Deploy-Connector {
         Write-Host "  State: $($resultObj.connectorState)" -ForegroundColor Green
         Write-Host ""
         Write-Host "Monitor status with:" -ForegroundColor Yellow
-        Write-Host "  aws kafkaconnect describe-connector --connector-arn $($resultObj.connectorArn) --region $Region" -ForegroundColor Gray
+        Write-Host "  `$describeParams = @{" -ForegroundColor Gray
+        Write-Host "      'connector-arn' = '$($resultObj.connectorArn)'" -ForegroundColor Gray
+        Write-Host "      'region'        = '$Region'" -ForegroundColor Gray
+        Write-Host "  }" -ForegroundColor Gray
+        Write-Host "  aws kafkaconnect describe-connector @describeParams" -ForegroundColor Gray
         Write-Host ""
 
         return $true
@@ -392,7 +395,8 @@ Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Wait 5-10 minutes for connectors to reach RUNNING state"
 Write-Host "  2. Check connector status:"
-Write-Host "     aws kafkaconnect list-connectors --region $Region"
+Write-Host "     `$listParams = @{ 'region' = '$Region' }" -ForegroundColor Gray
+Write-Host "     aws kafkaconnect list-connectors @listParams" -ForegroundColor Gray
 Write-Host "  3. View logs in CloudWatch Logs console"
 Write-Host "  4. Insert test data into Aurora to verify CDC"
 Write-Host ""

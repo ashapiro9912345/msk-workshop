@@ -282,7 +282,10 @@ Write-Host ""
 Write-Host "=== Next Steps ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "1. Monitor connector status (takes 5-10 minutes):" -ForegroundColor White
-Write-Host "   aws kafkaconnect list-connectors --region us-east-1" -ForegroundColor Gray
+Write-Host "   `$listConnectorsParams = @{" -ForegroundColor Gray
+Write-Host "       'region' = 'us-east-1'" -ForegroundColor Gray
+Write-Host "   }" -ForegroundColor Gray
+Write-Host "   aws kafkaconnect list-connectors @listConnectorsParams" -ForegroundColor Gray
 Write-Host ""
 Write-Host "2. Check CloudWatch Logs for connector activity:" -ForegroundColor White
 Write-Host "   AWS Console → CloudWatch → Log Groups → /aws/mskconnect/" -ForegroundColor Gray
@@ -298,7 +301,10 @@ Write-Host ""
 Write-Host "=== Useful Commands ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Check connector status:" -ForegroundColor White
-Write-Host "  aws kafkaconnect describe-connector --connector-arn <ARN>" -ForegroundColor Gray
+Write-Host "  `$describeParams = @{" -ForegroundColor Gray
+Write-Host "      'connector-arn' = '<ARN>'" -ForegroundColor Gray
+Write-Host "  }" -ForegroundColor Gray
+Write-Host "  aws kafkaconnect describe-connector @describeParams" -ForegroundColor Gray
 Write-Host ""
 Write-Host "View infrastructure:" -ForegroundColor White
 Write-Host "  cd terraform && terraform output" -ForegroundColor Gray

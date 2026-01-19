@@ -99,7 +99,13 @@ Write-Host "Option 2: Direct MySQL Command via SSM" -ForegroundColor Yellow
 Write-Host "  This runs the MySQL command directly." -ForegroundColor White
 Write-Host ""
 Write-Host "  Command:" -ForegroundColor White
-Write-Host ('    aws ssm start-session --target ' + $bastionId + ' --region ' + $Region + ' --document-name AWS-StartInteractiveCommand --parameters command="mysql -h ' + $auroraEndpoint + ' -u admin -p' + "'$dbPassword'" + '"') -ForegroundColor Gray
+Write-Host "    `$ssmCommandParams = @{" -ForegroundColor Gray
+Write-Host "        'target'        = '$bastionId'" -ForegroundColor Gray
+Write-Host "        'region'        = '$Region'" -ForegroundColor Gray
+Write-Host "        'document-name' = 'AWS-StartInteractiveCommand'" -ForegroundColor Gray
+Write-Host "        'parameters'    = 'command=`"mysql -h $auroraEndpoint -u admin -p''$dbPassword''`"'" -ForegroundColor Gray
+Write-Host "    }" -ForegroundColor Gray
+Write-Host "    aws ssm start-session @ssmCommandParams" -ForegroundColor Gray
 Write-Host ""
 Write-Host "---" -ForegroundColor DarkGray
 Write-Host ""

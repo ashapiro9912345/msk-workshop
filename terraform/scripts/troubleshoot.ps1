@@ -64,10 +64,10 @@ Write-Host ""
 # Check 2: MSK Cluster
 Write-Host "=== MSK Cluster ===" -ForegroundColor Yellow
 try {
-    $mskParams = @{
+    $listClustersParams = @{
         'region' = $Region
     }
-    $clusters = aws kafka list-clusters @mskParams 2>&1 | ConvertFrom-Json
+    $clusters = aws kafka list-clusters @listClustersParams 2>&1 | ConvertFrom-Json
     if ($clusters.ClusterInfoList.Count -gt 0) {
         foreach ($cluster in $clusters.ClusterInfoList) {
             $state = $cluster.State
@@ -87,10 +87,10 @@ Write-Host ""
 # Check 3: Aurora Cluster
 Write-Host "=== Aurora Cluster ===" -ForegroundColor Yellow
 try {
-    $rdsParams = @{
+    $describeClustersParams = @{
         'region' = $Region
     }
-    $dbClusters = aws rds describe-db-clusters @rdsParams 2>&1 | ConvertFrom-Json
+    $dbClusters = aws rds describe-db-clusters @describeClustersParams 2>&1 | ConvertFrom-Json
     $auroraClusters = $dbClusters.DBClusters | Where-Object { $_.DBClusterIdentifier -like "*aurora*" -or $_.DBClusterIdentifier -like "*cdc*" }
 
     if ($auroraClusters) {
@@ -109,9 +109,9 @@ try {
             try {
                 $paramGroupParams = @{
                     'db-cluster-parameter-group-name' = $paramGroup
-                    'region' = $Region
-                    'query' = "Parameters[?ParameterName=='binlog_format' || ParameterName=='binlog_row_image'].[ParameterName,ParameterValue]"
-                    'output' = 'table'
+                    'region'                          = $Region
+                    'query'                           = "Parameters[?ParameterName=='binlog_format' || ParameterName=='binlog_row_image'].[ParameterName,ParameterValue]"
+                    'output'                          = 'table'
                 }
                 $params = aws rds describe-db-cluster-parameters @paramGroupParams 2>$null
 
@@ -137,10 +137,10 @@ Write-Host ""
 # Check 4: Redshift Cluster
 Write-Host "=== Redshift Cluster ===" -ForegroundColor Yellow
 try {
-    $redshiftParams = @{
+    $describeRedshiftParams = @{
         'region' = $Region
     }
-    $rsClusters = aws redshift describe-clusters @redshiftParams 2>&1 | ConvertFrom-Json
+    $rsClusters = aws redshift describe-clusters @describeRedshiftParams 2>&1 | ConvertFrom-Json
     if ($rsClusters.Clusters.Count -gt 0) {
         foreach ($cluster in $rsClusters.Clusters) {
             $status = $cluster.ClusterStatus
@@ -160,10 +160,10 @@ Write-Host ""
 # Check 5: MSK Connect Plugins
 Write-Host "=== MSK Connect Custom Plugins ===" -ForegroundColor Yellow
 try {
-    $pluginsParams = @{
+    $listPluginsParams = @{
         'region' = $Region
     }
-    $plugins = aws kafkaconnect list-custom-plugins @pluginsParams 2>&1 | ConvertFrom-Json
+    $plugins = aws kafkaconnect list-custom-plugins @listPluginsParams 2>&1 | ConvertFrom-Json
     if ($plugins.customPlugins.Count -gt 0) {
         foreach ($plugin in $plugins.customPlugins) {
             $state = $plugin.customPluginState
@@ -184,10 +184,10 @@ Write-Host ""
 # Check 6: MSK Connect Connectors
 Write-Host "=== MSK Connect Connectors ===" -ForegroundColor Yellow
 try {
-    $connectorsParams = @{
+    $listConnectorsParams = @{
         'region' = $Region
     }
-    $connectors = aws kafkaconnect list-connectors @connectorsParams 2>&1 | ConvertFrom-Json
+    $connectors = aws kafkaconnect list-connectors @listConnectorsParams 2>&1 | ConvertFrom-Json
     if ($connectors.connectors.Count -gt 0) {
         foreach ($connector in $connectors.connectors) {
             $state = $connector.connectorState
@@ -202,11 +202,11 @@ try {
 
             # Get detailed info
             try {
-                $connectorDetailParams = @{
+                $describeConnectorParams = @{
                     'connector-arn' = $connector.connectorArn
-                    'region' = $Region
+                    'region'        = $Region
                 }
-                $detail = aws kafkaconnect describe-connector @connectorDetailParams 2>&1 | ConvertFrom-Json
+                $detail = aws kafkaconnect describe-connector @describeConnectorParams 2>&1 | ConvertFrom-Json
                 if ($detail.connectorDescription) {
                     $desc = $detail.connectorDescription
                     Write-Host "  Created: $($desc.creationTime)" -ForegroundColor Gray
@@ -235,20 +235,20 @@ Write-Host ""
 # Check 7: IAM Role
 Write-Host "=== IAM Role ===" -ForegroundColor Yellow
 try {
-    $iamRoleParams = @{
+    $getRoleParams = @{
         'role-name' = 'msk-connect-exec-role'
-        'region' = $Region
+        'region'    = $Region
     }
-    $role = aws iam get-role @iamRoleParams 2>&1 | ConvertFrom-Json
+    $role = aws iam get-role @getRoleParams 2>&1 | ConvertFrom-Json
     if ($role.Role) {
         Write-Host "✓ Role exists: msk-connect-exec-role" -ForegroundColor Green
         Write-Host "  ARN: $($role.Role.Arn)" -ForegroundColor Gray
 
         # Check attached policies
-        $policiesParams = @{
+        $listPoliciesParams = @{
             'role-name' = 'msk-connect-exec-role'
         }
-        $policies = aws iam list-attached-role-policies @policiesParams 2>&1 | ConvertFrom-Json
+        $policies = aws iam list-attached-role-policies @listPoliciesParams 2>&1 | ConvertFrom-Json
         Write-Host "  Attached Policies:" -ForegroundColor Gray
         foreach ($policy in $policies.AttachedPolicies) {
             Write-Host "    - $($policy.PolicyName)" -ForegroundColor Gray
@@ -263,11 +263,11 @@ Write-Host ""
 # Check 8: CloudWatch Log Groups
 Write-Host "=== CloudWatch Log Groups ===" -ForegroundColor Yellow
 try {
-    $logsParams = @{
-        'region' = $Region
-        'log-group-name-prefix' = '/aws/mskconnect'
+    $describeLogGroupsParams = @{
+        'region'                 = $Region
+        'log-group-name-prefix'  = '/aws/mskconnect'
     }
-    $logGroups = aws logs describe-log-groups @logsParams 2>&1 | ConvertFrom-Json
+    $logGroups = aws logs describe-log-groups @describeLogGroupsParams 2>&1 | ConvertFrom-Json
     if ($logGroups.logGroups.Count -gt 0) {
         foreach ($lg in $logGroups.logGroups) {
             Write-Host "✓ Log Group: $($lg.logGroupName)" -ForegroundColor Green
@@ -275,10 +275,10 @@ try {
             # Check for recent logs
             $logStreamsParams = @{
                 'log-group-name' = $lg.logGroupName
-                'region' = $Region
-                'order-by' = 'LastEventTime'
-                'descending' = $true
-                'max-items' = '1'
+                'region'         = $Region
+                'order-by'       = 'LastEventTime'
+                'descending'     = $true
+                'max-items'      = '1'
             }
             $streams = aws logs describe-log-streams @logStreamsParams 2>&1 | ConvertFrom-Json
 
@@ -329,10 +329,10 @@ if ($pluginCount -eq 0) {
 # Check if connectors exist
 $connectorCount = 0
 try {
-    $connectorsCheckParams = @{
+    $listConnectorsCheckParams = @{
         'region' = $Region
     }
-    $connectorsCheck = aws kafkaconnect list-connectors @connectorsCheckParams 2>&1 | ConvertFrom-Json
+    $connectorsCheck = aws kafkaconnect list-connectors @listConnectorsCheckParams 2>&1 | ConvertFrom-Json
     $connectorCount = $connectorsCheck.connectors.Count
 } catch {}
 
