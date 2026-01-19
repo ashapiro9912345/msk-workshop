@@ -75,7 +75,11 @@ try {
 # Verify AWS credentials
 Write-Host "Verifying AWS credentials..." -ForegroundColor Yellow
 try {
-    $identity = aws sts get-caller-identity --query 'Account' --output text 2>&1
+    $stsParams = @{
+        'query' = 'Account'
+        'output' = 'text'
+    }
+    $identity = aws sts get-caller-identity @stsParams 2>&1
     Write-Host "✓ AWS Account: $identity" -ForegroundColor Green
 } catch {
     Write-Error "Failed to verify AWS credentials. Run 'aws configure' first."
@@ -86,7 +90,12 @@ Write-Host ""
 # Get IAM role ARN
 Write-Host "Getting MSK Connect service role..." -ForegroundColor Yellow
 try {
-    $roleArn = aws iam get-role --role-name $RoleName --query 'Role.Arn' --output text 2>&1
+    $iamRoleParams = @{
+        'role-name' = $RoleName
+        'query' = 'Role.Arn'
+        'output' = 'text'
+    }
+    $roleArn = aws iam get-role @iamRoleParams 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Role not found"
     }
@@ -105,7 +114,10 @@ Ensure Terraform has created the role:
 # Get custom plugin ARNs
 Write-Host "Getting MSK Connect custom plugins..." -ForegroundColor Yellow
 try {
-    $pluginsJson = aws kafkaconnect list-custom-plugins --region $Region 2>&1
+    $pluginsParams = @{
+        'region' = $Region
+    }
+    $pluginsJson = aws kafkaconnect list-custom-plugins @pluginsParams 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "Failed to list plugins"
     }
@@ -171,7 +183,12 @@ function Deploy-Connector {
 
     # Check if connector already exists
     Write-Host "Checking if connector '$connectorName' already exists..." -ForegroundColor Yellow
-    $existingConnectors = aws kafkaconnect list-connectors --region $Region --query "connectors[?connectorName=='$connectorName'].connectorName" --output text 2>&1
+    $listConnectorsParams = @{
+        'region' = $Region
+        'query' = "connectors[?connectorName=='$connectorName'].connectorName"
+        'output' = 'text'
+    }
+    $existingConnectors = aws kafkaconnect list-connectors @listConnectorsParams 2>&1
     if ($existingConnectors -eq $connectorName) {
         Write-Warning "Connector '$connectorName' already exists. Skipping creation."
         Write-Host "To redeploy, first delete the existing connector:"
@@ -197,12 +214,24 @@ function Deploy-Connector {
         $mskSgId = terraform output -json 2>$null | ConvertFrom-Json | Select-Object -ExpandProperty msk_sg_id -ErrorAction SilentlyContinue
         if (-not $mskSgId) {
             # Fallback: query AWS for the security group
-            $mskSgId = aws ec2 describe-security-groups --region $Region --filters "Name=group-name,Values=msk-sg" --query "SecurityGroups[0].GroupId" --output text 2>&1
+            $sgParams = @{
+                'region' = $Region
+                'filters' = 'Name=group-name,Values=msk-sg'
+                'query' = 'SecurityGroups[0].GroupId'
+                'output' = 'text'
+            }
+            $mskSgId = aws ec2 describe-security-groups @sgParams 2>&1
         }
 
         # Get private subnet IDs
         $vpcId = terraform output -raw vpc_id 2>$null
-        $subnetIds = aws ec2 describe-subnets --region $Region --filters "Name=vpc-id,Values=$vpcId" "Name=tag:Name,Values=private-*" --query "Subnets[*].SubnetId" --output json 2>&1 | ConvertFrom-Json
+        $subnetsParams = @{
+            'region' = $Region
+            'filters' = "Name=vpc-id,Values=$vpcId Name=tag:Name,Values=private-*"
+            'query' = 'Subnets[*].SubnetId'
+            'output' = 'json'
+        }
+        $subnetIds = aws ec2 describe-subnets @subnetsParams 2>&1 | ConvertFrom-Json
 
         if ($mskSgId) {
             $kafkaCluster.apacheKafkaCluster.vpc.securityGroups = @($mskSgId)
@@ -249,7 +278,11 @@ function Deploy-Connector {
 
     # Create CloudWatch log group
     Write-Host "Creating CloudWatch log group: $logGroupName" -ForegroundColor Yellow
-    aws logs create-log-group --log-group-name $logGroupName --region $Region 2>$null
+    $logGroupParams = @{
+        'log-group-name' = $logGroupName
+        'region' = $Region
+    }
+    aws logs create-log-group @logGroupParams 2>$null
     # Ignore error if already exists
 
     # Convert to JSON

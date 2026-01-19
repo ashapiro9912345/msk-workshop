@@ -52,6 +52,8 @@ resource "aws_mskconnect_custom_plugin" "jdbc" {
     }
   }
   content_type = "ZIP"
+
+  depends_on = [aws_s3_object.jdbc_plugin]
 }
 
 /* MSK Connect connector resources intentionally removed to allow plan/apply to create

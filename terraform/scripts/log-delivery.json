@@ -1,0 +1,8 @@
+{
+  "workerLogDelivery": {
+    "cloudWatchLogs": {
+      "enabled": true,
+      "logGroup": "/aws/mskconnect/debezium-aurora-mysql-source"
+    }
+  }
+}

@@ -75,10 +75,10 @@ resource "aws_iam_role_policy_attachment" "bastion_ssm_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-# Allow bastion to describe RDS resources for getting endpoints
+# Allow bastion to describe RDS resources and manage parameter groups
 resource "aws_iam_role_policy" "bastion_rds_read" {
   count = var.create_bastion ? 1 : 0
-  name  = "bastion-rds-read-policy"
+  name  = "bastion-rds-management-policy"
   role  = aws_iam_role.bastion_role[0].id
 
   policy = jsonencode({
@@ -88,9 +88,34 @@ resource "aws_iam_role_policy" "bastion_rds_read" {
         Effect = "Allow"
         Action = [
           "rds:DescribeDBClusters",
-          "rds:DescribeDBInstances"
+          "rds:DescribeDBInstances",
+          "rds:DescribeDBClusterParameters",
+          "rds:DescribeDBClusterParameterGroups"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "rds:CreateDBClusterParameterGroup",
+          "rds:ModifyDBClusterParameterGroup",
+          "rds:DeleteDBClusterParameterGroup"
+        ]
+        Resource = "arn:aws:rds:*:*:cluster-pg:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "rds:ModifyDBCluster"
+        ]
+        Resource = "arn:aws:rds:*:*:cluster:*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "rds:RebootDBInstance"
+        ]
+        Resource = "arn:aws:rds:*:*:db:*"
       }
     ]
   })

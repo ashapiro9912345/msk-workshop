@@ -74,7 +74,10 @@ try {
 
 # Check AWS credentials
 try {
-    $identity = aws sts get-caller-identity 2>&1 | ConvertFrom-Json
+    $stsParams = @{
+        'output' = 'json'
+    }
+    $identity = aws sts get-caller-identity @stsParams 2>&1 | ConvertFrom-Json
     Write-Host "✓ AWS Account: $($identity.Account)" -ForegroundColor Green
     Write-Host "✓ AWS Identity: $($identity.Arn)" -ForegroundColor Green
 } catch {

@@ -1,0 +1,6 @@
+{
+  "provisionedCapacity": {
+    "mcuCount": 1,
+    "workerCount": 1
+  }
+}

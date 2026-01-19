@@ -84,7 +84,11 @@ Write-Host "Option 1: Connect via Systems Manager (Recommended)" -ForegroundColo
 Write-Host "  This opens an interactive shell on the bastion host." -ForegroundColor White
 Write-Host ""
 Write-Host "  Command:" -ForegroundColor White
-Write-Host "    aws ssm start-session --target $bastionId --region $Region" -ForegroundColor Gray
+Write-Host "    `$parameters = @{" -ForegroundColor Gray
+Write-Host "        'target' = '$bastionId'" -ForegroundColor Gray
+Write-Host "        'region' = '$Region'" -ForegroundColor Gray
+Write-Host "    }" -ForegroundColor Gray
+Write-Host "    aws ssm start-session @parameters" -ForegroundColor Gray
 Write-Host ""
 Write-Host "  Then inside the bastion, connect to MySQL:" -ForegroundColor White
 Write-Host "    mysql -h $auroraEndpoint -u admin -p'$dbPassword'" -ForegroundColor Gray
@@ -95,7 +99,7 @@ Write-Host "Option 2: Direct MySQL Command via SSM" -ForegroundColor Yellow
 Write-Host "  This runs the MySQL command directly." -ForegroundColor White
 Write-Host ""
 Write-Host "  Command:" -ForegroundColor White
-Write-Host "    aws ssm start-session --target $bastionId --region $Region --document-name AWS-StartInteractiveCommand --parameters command=\""mysql -h $auroraEndpoint -u admin -p'$dbPassword'\"" -ForegroundColor Gray
+Write-Host ('    aws ssm start-session --target ' + $bastionId + ' --region ' + $Region + ' --document-name AWS-StartInteractiveCommand --parameters command="mysql -h ' + $auroraEndpoint + ' -u admin -p' + "'$dbPassword'" + '"') -ForegroundColor Gray
 Write-Host ""
 Write-Host "---" -ForegroundColor DarkGray
 Write-Host ""
@@ -130,7 +134,11 @@ if ($connect -eq 'yes') {
     Write-Host ""
 
     # Start SSM session
-    aws ssm start-session --target $bastionId --region $Region
+    $ssmParameters = @{
+        'target' = $bastionId
+        'region' = $Region
+    }
+    aws ssm start-session @ssmParameters
 } else {
     Write-Host ""
     Write-Host "Session not started. Use the commands above when ready." -ForegroundColor Yellow

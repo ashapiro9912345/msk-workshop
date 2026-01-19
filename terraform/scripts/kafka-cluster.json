@@ -1,0 +1,9 @@
+{
+  "apacheKafkaCluster": {
+    "bootstrapServers": "b-1.mskcdcclusterdev.dut8cx.c3.kafka.us-east-1.amazonaws.com:9094,b-2.mskcdcclusterdev.dut8cx.c3.kafka.us-east-1.amazonaws.com:9094",
+    "vpc": {
+      "securityGroups": ["sg-03744042f7bcde608"],
+      "subnets": ["subnet-02e289af3f2b78bb0", "subnet-0256d8fc35608ecb5"]
+    }
+  }
+}
