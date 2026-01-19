@@ -1,0 +1,8 @@
+[
+  {
+    "customPlugin": {
+      "customPluginArn": "arn:aws:kafkaconnect:us-east-1:867344443087:custom-plugin/debezium-plugin/ad28c32e-4ea7-4fc4-9349-ce319a19dd28-2",
+      "revision": 1
+    }
+  }
+]

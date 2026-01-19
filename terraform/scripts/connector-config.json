@@ -1,0 +1,20 @@
+{
+  "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+  "tasks.max": "1",
+  "database.hostname": "aurora-cdc-cluster.cluster-ck5mmcwy82r9.us-east-1.rds.amazonaws.com",
+  "database.port": "3306",
+  "database.user": "debezium",
+  "database.password": "1zK_F?K+bQC1Rwn_bcXt",
+  "database.server.id": "184054",
+  "database.server.name": "aurora_mysql_cdc",
+  "topic.prefix": "aurora",
+  "database.include.list": "mydb",
+  "table.include.list": "mydb.users",
+  "schema.history.internal.kafka.bootstrap.servers": "b-1.mskcdcclusterdev.dut8cx.c3.kafka.us-east-1.amazonaws.com:9094,b-2.mskcdcclusterdev.dut8cx.c3.kafka.us-east-1.amazonaws.com:9094",
+  "schema.history.internal.kafka.topic": "schema-changes.aurora",
+  "include.schema.changes": "false",
+  "snapshot.mode": "initial",
+  "time.precision.mode": "adaptive",
+  "decimal.handling.mode": "double",
+  "bigint.unsigned.handling.mode": "long"
+}
